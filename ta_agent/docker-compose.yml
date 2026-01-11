@@ -1,0 +1,88 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database (Optional - can use SQLite)
+  postgres:
+    image: postgres:15-alpine
+    container_name: ta_agent_postgres
+    environment:
+      POSTGRES_DB: ta_agent
+      POSTGRES_USER: ta_user
+      POSTGRES_PASSWORD: ta_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - ta_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ta_user -d ta_agent"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache (Optional)
+  redis:
+    image: redis:7-alpine
+    container_name: ta_agent_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - ta_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  backend:
+    build: .
+    container_name: ta_agent_backend
+    command: uvicorn src.api.main_new:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - .:/app
+      - backend_data:/app/data
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite:///./data/databases/ta_agent.db
+      # - DATABASE_URL=postgresql://ta_user:ta_password@postgres:5432/ta_agent
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - SECRET_KEY=${SECRET_KEY}
+      - DEBUG=True
+      - CACHE_ENABLED=False
+    depends_on:
+      - redis
+    networks:
+      - ta_network
+
+  # Streamlit Dashboard
+  streamlit:
+    build:
+      context: .
+      dockerfile: Dockerfile.streamlit
+    container_name: ta_agent_streamlit
+    command: streamlit run src/dashboard/app.py
+    volumes:
+      - .:/app
+    ports:
+      - "8501:8501"
+    environment:
+      - BACKEND_URL=http://backend:8000
+    depends_on:
+      - backend
+    networks:
+      - ta_network
+
+networks:
+  ta_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  backend_data:

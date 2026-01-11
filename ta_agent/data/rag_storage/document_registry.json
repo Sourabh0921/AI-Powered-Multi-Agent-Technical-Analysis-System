@@ -1,0 +1,16 @@
+{
+  "d195c0974aecb29528a6ac443ee29558": {
+    "doc_id": "d195c0974aecb29528a6ac443ee29558",
+    "filename": "8e220c88-734e-489c-821c-4cc20beb9618_infosysBalancesheet.pdf",
+    "doc_type": "earnings_report",
+    "chunks": 355,
+    "ingestion_date": "2026-01-10T00:44:36.077825",
+    "metadata": {
+      "original_filename": "infosysBalancesheet.pdf",
+      "file_id": "8e220c88-734e-489c-821c-4cc20beb9618",
+      "description": null,
+      "ticker": "INFOSYS.NSE",
+      "doc_type": "earnings_report"
+    }
+  }
+}
